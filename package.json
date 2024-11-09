@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alealpha07/alealpha07-node-3dprinter-mks-wifi.git"
+    "url": "git+https://github.com/alealpha07/node-3dprinter-mks-wifi.git"
   },
   "keywords": [
     "3dprint",
@@ -26,7 +26,7 @@
   "author": "Alessandro Prati",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/alealpha07/alealpha07-node-3dprinter-mks-wifi/issues"
+    "url": "https://github.com/alealpha07/node-3dprinter-mks-wifi/issues"
   },
-  "homepage": "https://github.com/alealpha07/alealpha07-node-3dprinter-mks-wifi#readme"
+  "homepage": "https://github.com/alealpha07/node-3dprinter-mks-wifi#readme"
 }
