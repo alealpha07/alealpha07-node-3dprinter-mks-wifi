@@ -1,0 +1,32 @@
+{
+  "name": "node-3dprinter-mks-wifi",
+  "version": "1.0.0",
+  "description": "This package allows to manage a 3dPrinter with MKS WIFI support using node.",
+  "main": "printer.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alealpha07/alealpha07-node-3dprinter-mks-wifi.git"
+  },
+  "keywords": [
+    "3dprint",
+    "3d",
+    "printer",
+    "printer",
+    "3d",
+    "mks",
+    "mks-wifi",
+    "mks",
+    "wifi",
+    "3d",
+    "printer"
+  ],
+  "author": "Alessandro Prati",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alealpha07/alealpha07-node-3dprinter-mks-wifi/issues"
+  },
+  "homepage": "https://github.com/alealpha07/alealpha07-node-3dprinter-mks-wifi#readme"
+}
