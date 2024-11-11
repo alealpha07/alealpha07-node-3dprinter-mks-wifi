@@ -8,7 +8,7 @@
 
 ## Prerequisites
 
-This project requires NodeJS (version 16 or later) and NPM.
+This package requires NodeJS (version 16 or later) and NPM.
 [Node](http://nodejs.org/) and [NPM](https://npmjs.org/) are really easy to install.
 To make sure you have them available on your machine,
 try running the following command.
