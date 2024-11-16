@@ -49,6 +49,14 @@ class Parser {
         return null;
     }
 
+    static parseFilenames(data){
+        const lines = data.split("\n");
+        if(lines && lines.length > 0){
+            return lines;
+        }
+        return null;
+    }
+
     static parseState(data) {
         const tempRegex = /M997 ([A-Z]+)/;
         const match = data.match(tempRegex);

@@ -2,12 +2,12 @@
 
 # node-3dprinter-mks-wifi
 
-> This package allows to manage a 3dPrinter with MKS WIFI support using node.
+> This package allows to manage a 3dPrinter with MKS WIFI support using node. 
 
 ---
 
 ## Prerequisites
-
+This package is designs for 3dPrinter using marlin derived firmware and supporting MKS WIFI featrues!
 This package requires NodeJS (version 16 or later) and NPM.
 [Node](http://nodejs.org/) and [NPM](https://npmjs.org/) are really easy to install.
 To make sure you have them available on your machine,
@@ -35,6 +35,8 @@ $ npm -v && node -v
     - [getPrintingProgress](#getprintingpprogress)
     - [getPrintingTime](#getprintingtime)
     - [getPrintingFilename](#getprintingfilename)
+    - [getFilenames](#getfilenames)
+    - [startPrinting](#startPrinting)
     - [home](#home)
     - [pause](#pause)
     - [resume](#resume)
@@ -320,6 +322,44 @@ Supported options and possible results for the `getPrintingFilename` method are 
 #### Options
 
 no option is present
+
+---
+### getFilenames
+get all files in 3d printer sd card
+```js
+printer.getFilenames()
+```
+
+Supported options and possible results for the `getFilenames` method are listed below.
+
+#### Returns
+`list: [string]` - `['file1.gcode', 'file2.gcode', ...]` if succeeded:
+`string` - `Error receiving data: ERROR` if failed
+
+#### Options
+
+no option is present
+
+---
+### startPrinting
+get all files in 3d printer sd card
+```js
+printer.startPrinting(filename)
+```
+
+Supported options and possible results for the `startPrinting` method are listed below.
+
+#### Returns
+`string` - `ok` if succeeded:
+`string` - `Error receiving data: ERROR` if failed
+
+#### Options
+
+`filename`
+
+| Type | Default value | Mandatory| 
+| --- | --- | --- |
+| string | null | yes |
 
 ---
 ### home

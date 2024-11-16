@@ -11,6 +11,9 @@ class Printer{
     #maximumBedTemperature;
 
     constructor(ip, port, minimumExtruderTemperature=0, maximumExtruderTemperature=280, minimumBedTemperature=0, maximumBedTemperature=100){
+        if(!ip || !port){
+            throw(`Error: ip and port are mandatory!`);
+        }
         this.#ip = ip;
         this.#port = port;
         this.#client = new net.Socket();
@@ -44,7 +47,7 @@ class Printer{
         });
     }
 
-    #sendCommand(command, noreply=false) {
+    #sendCommand(command, noreply=false, waitok=false) {
         return new Promise(async (resolve, reject) => {
             let responseBuffer = '';
             this.#client.write(`${command}\n`);
@@ -52,11 +55,20 @@ class Printer{
             this.#client.on('data', (data) => {
                 responseBuffer += data.toString();
 
-                if (responseBuffer.includes('ok') && !noreply) {
+                if (responseBuffer.includes('ok') && !noreply && !waitok) {
                     responseBuffer = responseBuffer.replace('ok', '').trim();
                 }
 
-                if (responseBuffer.trim()) {
+                if (waitok && (responseBuffer.trim() && responseBuffer.includes('ok'))) {
+                    responseBuffer = responseBuffer.replace('ok', '').trim();
+                    responseBuffer = responseBuffer.replace('Begin file list', '').trim();
+                    responseBuffer = responseBuffer.replace('End file list', '').trim();
+                    responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
+                    this.#client.removeAllListeners('data');
+                    this.#client.removeAllListeners('error');
+                    resolve(responseBuffer);
+                }
+                else if (!waitok && responseBuffer.trim()){
                     this.#client.removeAllListeners('data');
                     this.#client.removeAllListeners('error');
                     resolve(responseBuffer);
@@ -121,6 +133,36 @@ class Printer{
             }).catch((err) => {
                 reject(`Error receiving data: ${err.message}`);
             })
+        });
+    }
+
+    getFilenames(){
+        return new Promise((resolve, reject) => {
+            this.#sendCommand("M20", false, true).then((data) => {
+                let parsedData = Parser.parseFilenames(data);
+                resolve(parsedData);
+            }).catch((err) => {
+                reject(`Error receiving data: ${err.message}`);
+            })
+        });
+    }
+
+    startPrinting(filename){
+        return new Promise((resolve, reject) => {
+            if(!filename){
+                reject(`Error: filename is mandatory!`);
+            }
+            this.#sendCommand(`M23 ${filename}`).then((data) => {
+                this.#sendCommand(`M24`, true).then((data) => {
+                    let parsedData = Parser.parseOk(data);
+                    resolve(parsedData);
+                }).catch((err) => {
+                    reject(`Error receiving data: ${err.message}`);
+                })
+            }).catch((err) => {
+                reject(`Error receiving data: ${err.message}`);
+            })
+            
         });
     }
 
