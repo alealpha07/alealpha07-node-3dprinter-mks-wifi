@@ -342,7 +342,7 @@ no option is present
 
 ---
 ### startPrinting
-get all files in 3d printer sd card
+start printing the selected file
 ```js
 printer.startPrinting(filename)
 ```
