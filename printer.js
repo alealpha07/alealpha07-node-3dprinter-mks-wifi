@@ -137,7 +137,7 @@ class Printer {
         }, 50);
     }
 
-    #sendCommand(command, noreply = false, waitok = false) {
+    #sendCommand(command, noreply = false, waitEndFileList = false) {
         return new Promise((resolve, reject) => {
             let responseBuffer = '';
             this.#client.write(`${command}\n`);
@@ -145,11 +145,11 @@ class Printer {
             const dataListener = (data) => {
                 responseBuffer += data.toString();
 
-                if (responseBuffer.includes('ok') && !noreply && !waitok) {
+                if (responseBuffer.includes('ok') && !noreply && !waitEndFileList) {
                     responseBuffer = responseBuffer.replace('ok', '').trim();
                 }
 
-                if (waitok && (responseBuffer.trim() && responseBuffer.includes('ok'))) {
+                if (waitEndFileList && (responseBuffer.trim() && responseBuffer.includes('End file list') && responseBuffer.includes('ok'))) {
                     responseBuffer = responseBuffer.replace('Begin file list', '').trim();
                     responseBuffer = responseBuffer.replace('End file list', '').trim();
                     responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
@@ -157,7 +157,7 @@ class Printer {
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
-                } else if (!waitok && responseBuffer.trim()) {
+                } else if (!waitEndFileList && responseBuffer.trim()) {
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
