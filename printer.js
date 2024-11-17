@@ -1,6 +1,14 @@
 const Parser = require("./parser");
 const net = require('net');
 
+function replaceLastOccurrence(input, target, replacement) {
+    const lastIndex = input.lastIndexOf(target);
+    if (lastIndex === -1) {
+        return input;
+    }
+    return input.substring(0, lastIndex) + replacement + input.substring(lastIndex + target.length);
+}
+
 class Printer {
     #ip;
     #port;
@@ -142,10 +150,10 @@ class Printer {
                 }
 
                 if (waitok && (responseBuffer.trim() && responseBuffer.includes('ok'))) {
-                    responseBuffer = responseBuffer.replace('ok', '').trim();
                     responseBuffer = responseBuffer.replace('Begin file list', '').trim();
                     responseBuffer = responseBuffer.replace('End file list', '').trim();
                     responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
+                    responseBuffer = replaceLastOccurrence(responseBuffer, 'ok', '').trim();
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
