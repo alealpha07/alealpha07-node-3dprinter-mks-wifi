@@ -37,8 +37,7 @@ class Printer {
                     }
                     this.#client.connect(this.#port, this.#ip, () => {
                         this.#isConnected = true;
-                        console.log(`Connected to printer at ${this.#ip}:${this.#port}`);
-                        resolve();
+                        resolve(`Connected to printer at ${this.#ip}:${this.#port}`);
                         this.#processQueue();
                     });
 
@@ -52,7 +51,6 @@ class Printer {
                         this.#client.removeListener('error', errorListener);
                         this.#client.removeListener('close', closeListener);
                         this.#isConnected = false;
-                        console.warn("Connection closed");
                     };
 
                     this.#client.once('error', errorListener);
@@ -73,16 +71,30 @@ class Printer {
                 resolve("Already disconnected");
                 return;
             }
-            this.#client.end(() => {
-                this.#isConnected = false;
+    
+            this.#isConnected = false;
+    
+            const cleanup = () => {
+                this.#client.removeListener('error', errorListener);
+                this.#client.removeListener('close', closeListener);
                 this.#client.removeAllListeners();
-                resolve(`Disconnected from printer.`);
-            });
+            };
+    
+            const errorListener = (err) => {
+                cleanup();
+                reject(`Disconnection error: ${err.message}`);
+            };
+    
+            const closeListener = () => {
+                cleanup();
+                resolve("Disconnected from printer.");
+            };
 
-            this.#client.once('error', (err) => {
-                this.#client.removeAllListeners();
-                reject(new Error(`Disconnection error: ${err.message}`));
+            this.#client.on('error', errorListener);
+            this.#client.on('close', closeListener);
+            this.#client.end(() => {
             });
+            this.#client.destroy();
         });
     }
 
