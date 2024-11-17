@@ -1,6 +1,6 @@
 {
   "name": "node-3dprinter-mks-wifi",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "This package allows to manage a 3dPrinter with MKS WIFI support using node.",
   "main": "printer.js",
   "scripts": {

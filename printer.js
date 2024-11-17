@@ -5,6 +5,7 @@ class Printer{
     #ip;
     #port;
     #client;
+    #clientBusy;
     #minimumExtruderTemperature;
     #maximumExtruderTemperature;
     #minimumBedTemperature;
@@ -49,6 +50,10 @@ class Printer{
 
     #sendCommand(command, noreply=false, waitok=false) {
         return new Promise(async (resolve, reject) => {
+            if(this.#clientBusy){
+                setTimeout(this.#sendCommand(command, noreply, waitok), 500);
+            }
+            this.#clientBusy = true;
             let responseBuffer = '';
             this.#client.write(`${command}\n`);
     
@@ -66,16 +71,19 @@ class Printer{
                     responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
                     this.#client.removeAllListeners('data');
                     this.#client.removeAllListeners('error');
+                    this.#clientBusy = false;
                     resolve(responseBuffer);
                 }
                 else if (!waitok && responseBuffer.trim()){
                     this.#client.removeAllListeners('data');
                     this.#client.removeAllListeners('error');
+                    this.#clientBusy = false;
                     resolve(responseBuffer);
                 }
             });
     
             this.#client.on('error', (err) => {
+                this.#clientBusy = false;
                 reject(`Error receiving data: ${err.message}`);
             });
         });
