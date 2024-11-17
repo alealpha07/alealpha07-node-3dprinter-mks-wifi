@@ -143,6 +143,9 @@ class Printer {
 
                 if (waitok && (responseBuffer.trim() && responseBuffer.includes('ok'))) {
                     responseBuffer = responseBuffer.replace('ok', '').trim();
+                    responseBuffer = responseBuffer.replace('Begin file list', '').trim();
+                    responseBuffer = responseBuffer.replace('End file list', '').trim();
+                    responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
