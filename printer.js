@@ -153,7 +153,6 @@ class Printer {
                     responseBuffer = responseBuffer.replace('Begin file list', '').trim();
                     responseBuffer = responseBuffer.replace('End file list', '').trim();
                     responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
-                    responseBuffer = replaceLastOccurrence(responseBuffer, 'ok', '').trim();
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);

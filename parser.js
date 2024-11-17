@@ -50,8 +50,9 @@ class Parser {
     }
 
     static parseFilenames(data){
-        const lines = data.split("\n");
+        let lines = data.split("\n");
         if(lines && lines.length > 0){
+            lines = lines.filter((el) => el != "" && el != "ok");
             return lines;
         }
         return null;
