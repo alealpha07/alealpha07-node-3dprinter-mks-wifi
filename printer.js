@@ -36,7 +36,7 @@ class Printer {
             this.#client.connect(this.#port, this.#ip, () => {
                 this.#isConnected = true;
                 resolve(`Connected to printer at ${this.#ip}:${this.#port}`);
-                this.#processQueue(); // Start processing the queue after connection
+                this.#processQueue();
             });
 
             this.#client.on('error', (err) => {
@@ -114,9 +114,11 @@ class Printer {
                     responseBuffer = responseBuffer.replace('End file list', '').trim();
                     responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
                     this.#client.removeListener('data', dataListener);
+                    this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
                 } else if (!waitok && responseBuffer.trim()) {
                     this.#client.removeListener('data', dataListener);
+                    this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
                 }
             };
