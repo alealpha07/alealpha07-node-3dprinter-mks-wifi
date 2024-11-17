@@ -14,7 +14,7 @@ class Printer {
 
     constructor(ip, port, minimumExtruderTemperature = 0, maximumExtruderTemperature = 280, minimumBedTemperature = 0, maximumBedTemperature = 100) {
         if (!ip || !port) {
-            throw (`Error: ip and port are mandatory!`);
+            throw new Error("Error: ip and port are mandatory!");
         }
         this.#ip = ip;
         this.#port = port;
@@ -27,34 +27,44 @@ class Printer {
         this.#isConnected = false;
     }
 
-    async connect() {
-        return new Promise((resolve, reject) => {
-            if (this.#isConnected) {
-                resolve("Already connected");
+    async connect(retries = 3, delay = 2000) {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                await new Promise((resolve, reject) => {
+                    if (this.#isConnected) {
+                        resolve("Already connected");
+                        return;
+                    }
+                    this.#client.connect(this.#port, this.#ip, () => {
+                        this.#isConnected = true;
+                        console.log(`Connected to printer at ${this.#ip}:${this.#port}`);
+                        resolve();
+                        this.#processQueue();
+                    });
+
+                    const errorListener = (err) => {
+                        this.#client.removeListener('error', errorListener);
+                        this.#client.removeListener('close', closeListener);
+                        reject(new Error(`Connection error: ${err.message}`));
+                    };
+
+                    const closeListener = () => {
+                        this.#client.removeListener('error', errorListener);
+                        this.#client.removeListener('close', closeListener);
+                        this.#isConnected = false;
+                        console.warn("Connection closed");
+                    };
+
+                    this.#client.once('error', errorListener);
+                    this.#client.once('close', closeListener);
+                });
                 return;
+            } catch (err) {
+                console.error(`Connection attempt ${attempt} failed: ${err.message}`);
+                if (attempt < retries) await new Promise(res => setTimeout(res, delay));
+                else throw new Error("Failed to connect after multiple attempts");
             }
-            this.#client.connect(this.#port, this.#ip, () => {
-                this.#isConnected = true;
-                resolve(`Connected to printer at ${this.#ip}:${this.#port}`);
-                this.#processQueue();
-            });
-
-            const errorListener = (err) => {
-                this.#client.removeListener('error', errorListener);
-                this.#client.removeListener('close', closeListener);
-                reject(`Connection error: ${err.message}`);
-            };
-
-            this.#client.on('error', errorListener);
-
-            const closeListener = (err) =>{
-                this.#client.removeListener('error', errorListener);
-                this.#client.removeListener('close', closeListener);
-                this.#isConnected = false;
-            }
-
-            this.#client.on('close', closeListener);
-        });
+        }
     }
 
     disconnect() {
@@ -65,16 +75,14 @@ class Printer {
             }
             this.#client.end(() => {
                 this.#isConnected = false;
-                this.#client.removeListener('error', errorListener);
+                this.#client.removeAllListeners();
                 resolve(`Disconnected from printer.`);
             });
 
-            const errorListener = (err) => {
-                this.#client.removeListener('error', errorListener);
-                reject(`Disconnection error: ${err.message}`);
-            };
-
-            this.#client.on('error', errorListener);
+            this.#client.once('error', (err) => {
+                this.#client.removeAllListeners();
+                reject(new Error(`Disconnection error: ${err.message}`));
+            });
         });
     }
 
@@ -96,16 +104,17 @@ class Printer {
     #processQueue() {
         if (this.#commandQueue.length === 0 || !this.#isConnected) return;
         const { command, noreply, waitok, resolve, reject } = this.#commandQueue[0];
-
-        this.#sendCommand(command, noreply, waitok).then((result) => {
-            resolve(result);
-            this.#commandQueue.shift();
-            this.#processQueue();
-        }).catch((err) => {
-            reject(err);
-            this.#commandQueue.shift();
-            this.#processQueue();
-        });
+        setTimeout(() => {
+            this.#sendCommand(command, noreply, waitok).then((result) => {
+                resolve(result);
+                this.#commandQueue.shift();
+                this.#processQueue();
+            }).catch((err) => {
+                reject(err);
+                this.#commandQueue.shift();
+                this.#processQueue();
+            });
+        }, 50);
     }
 
     #sendCommand(command, noreply = false, waitok = false) {
@@ -122,9 +131,6 @@ class Printer {
 
                 if (waitok && (responseBuffer.trim() && responseBuffer.includes('ok'))) {
                     responseBuffer = responseBuffer.replace('ok', '').trim();
-                    responseBuffer = responseBuffer.replace('Begin file list', '').trim();
-                    responseBuffer = responseBuffer.replace('End file list', '').trim();
-                    responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
                     resolve(responseBuffer);
@@ -138,7 +144,7 @@ class Printer {
             const errorListener = (err) => {
                 this.#client.removeListener('data', dataListener);
                 this.#client.removeListener('error', errorListener);
-                reject(`Error receiving data: ${err.message}`);
+                reject(new Error(`Error receiving data: ${err.message}`));
             };
 
             this.#client.on('data', dataListener);
