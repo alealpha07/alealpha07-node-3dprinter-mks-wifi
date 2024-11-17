@@ -1,6 +1,6 @@
 class Parser {
     static parseTemperature(data) {
-        const tempRegex = /T:(\d+) \/(\d+) B:(\d+) \/(\d+) T0:(\d+) \/(\d+) T1:(\d+) \/(\d+) @:(\d+) B@:(\d+)/;
+        const tempRegex = /T:(\d+) \/(\d+) B:([-\d]+) \/(\d+) T0:(\d+) \/(\d+) T1:(\d+) \/(\d+) @:(\d+) B@:(\d+)/;
         const match = data.match(tempRegex);
     
         if (match) {
