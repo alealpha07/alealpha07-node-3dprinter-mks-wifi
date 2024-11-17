@@ -39,13 +39,21 @@ class Printer {
                 this.#processQueue();
             });
 
-            this.#client.on('error', (err) => {
+            const errorListener = (err) => {
+                this.#client.removeListener('error', errorListener);
+                this.#client.removeListener('close', closeListener);
                 reject(`Connection error: ${err.message}`);
-            });
+            };
 
-            this.#client.on('close', () => {
+            this.#client.on('error', errorListener);
+
+            const closeListener = (err) =>{
+                this.#client.removeListener('error', errorListener);
+                this.#client.removeListener('close', closeListener);
                 this.#isConnected = false;
-            });
+            }
+
+            this.#client.on('close', closeListener);
         });
     }
 
@@ -57,12 +65,16 @@ class Printer {
             }
             this.#client.end(() => {
                 this.#isConnected = false;
+                this.#client.removeListener('error', errorListener);
                 resolve(`Disconnected from printer.`);
             });
 
-            this.#client.on('error', (err) => {
+            const errorListener = (err) => {
+                this.#client.removeListener('error', errorListener);
                 reject(`Disconnection error: ${err.message}`);
-            });
+            };
+
+            this.#client.on('error', errorListener);
         });
     }
 
@@ -125,6 +137,7 @@ class Printer {
 
             const errorListener = (err) => {
                 this.#client.removeListener('data', dataListener);
+                this.#client.removeListener('error', errorListener);
                 reject(`Error receiving data: ${err.message}`);
             };
 
