@@ -43,27 +43,41 @@ class Printer {
                         resolve("Already connected");
                         return;
                     }
+    
+                    if (this.#client.destroyed === false || this.#client.connecting) {
+                        this.#client.destroy();
+                    }
+    
+                    const timeout = setTimeout(() => {
+                        this.#client.destroy();
+                        reject(new Error("Connection timeout"));
+                    }, 5000);
+    
                     this.#client.connect(this.#port, this.#ip, () => {
+                        clearTimeout(timeout);
                         this.#isConnected = true;
                         resolve(`Connected to printer at ${this.#ip}:${this.#port}`);
                         this.#processQueue();
                     });
-
+    
                     const errorListener = (err) => {
+                        clearTimeout(timeout);
                         this.#client.removeListener('error', errorListener);
                         this.#client.removeListener('close', closeListener);
                         reject(new Error(`Connection error: ${err.message}`));
                     };
-
+    
                     const closeListener = () => {
+                        clearTimeout(timeout);
                         this.#client.removeListener('error', errorListener);
                         this.#client.removeListener('close', closeListener);
                         this.#isConnected = false;
                     };
-
+    
                     this.#client.once('error', errorListener);
                     this.#client.once('close', closeListener);
                 });
+    
                 return;
             } catch (err) {
                 console.error(`Connection attempt ${attempt} failed: ${err.message}`);
@@ -71,7 +85,7 @@ class Printer {
                 else throw new Error("Failed to connect after multiple attempts");
             }
         }
-    }
+    }    
 
     disconnect() {
         return new Promise((resolve, reject) => {
