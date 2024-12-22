@@ -1,14 +1,6 @@
 const Parser = require("./parser");
 const net = require('net');
 
-function replaceLastOccurrence(input, target, replacement) {
-    const lastIndex = input.lastIndexOf(target);
-    if (lastIndex === -1) {
-        return input;
-    }
-    return input.substring(0, lastIndex) + replacement + input.substring(lastIndex + target.length);
-}
-
 class Printer {
     #ip;
     #port;
@@ -154,39 +146,49 @@ class Printer {
     #sendCommand(command, noreply = false, waitEndFileList = false) {
         return new Promise((resolve, reject) => {
             let responseBuffer = '';
+            
+            const timeout = setTimeout(() => {
+                this.#client.removeListener('data', dataListener);
+                this.#client.removeListener('error', errorListener);
+                reject(new Error(`Command "${command}" timed out after 5 seconds`));
+            }, 5000);
+    
             this.#client.write(`${command}\n`);
-
+    
             const dataListener = (data) => {
                 responseBuffer += data.toString();
-
+    
                 if (responseBuffer.includes('ok') && !noreply && !waitEndFileList) {
                     responseBuffer = responseBuffer.replace('ok', '').trim();
                 }
-
+    
                 if (waitEndFileList && (responseBuffer.trim() && responseBuffer.includes('End file list') && responseBuffer.includes('ok'))) {
                     responseBuffer = responseBuffer.replace('Begin file list', '').trim();
                     responseBuffer = responseBuffer.replace('End file list', '').trim();
                     responseBuffer = responseBuffer.replaceAll(/.*\.DIR/g, '').trim();
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
+                    clearTimeout(timeout); // Clear timeout once we receive the response
                     resolve(responseBuffer);
                 } else if (!waitEndFileList && responseBuffer.trim()) {
                     this.#client.removeListener('data', dataListener);
                     this.#client.removeListener('error', errorListener);
+                    clearTimeout(timeout); // Clear timeout once we receive the response
                     resolve(responseBuffer);
                 }
             };
-
+    
             const errorListener = (err) => {
                 this.#client.removeListener('data', dataListener);
                 this.#client.removeListener('error', errorListener);
+                clearTimeout(timeout); // Clear timeout on error
                 reject(new Error(`Error receiving data: ${err.message}`));
             };
-
+    
             this.#client.on('data', dataListener);
             this.#client.on('error', errorListener);
         });
-    }
+    }    
 
     getTemperature() {
         return this.#enqueueCommand("M105").then(Parser.parseTemperature);
